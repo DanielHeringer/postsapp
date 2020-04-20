@@ -1,0 +1,50 @@
+### Queries usuarios
+
+mutation {
+  login(username:"daniel", password:"123") {
+    id
+    username
+    token
+  }
+}
+
+mutation{
+  createUser(username:"daniel3", password:"312") {
+    id
+    username
+    token
+  }
+}
+
+mutation{
+  updateUser(username:"daniel5", password:"312", id:"5e99971e85155927a4686727") {
+    id
+    username
+    token
+  }
+}
+
+query {
+  userByID(id: "5e99971e85155927a4686727"){
+    id
+    username
+  }
+}
+
+query {
+  users{
+    id
+    username
+  }
+}
+
+query {
+  userByUsername(username: "daniel2"){ 
+    id
+    username
+  }
+}
+
+
+### Queries Posts
+

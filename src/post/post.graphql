@@ -1,0 +1,24 @@
+type Post {
+    _id: ID
+    text: String
+    created: String
+    upvotes: [User]
+    downvotes: [User]
+    creator: User
+}
+
+type Query {
+    posts(page: Int): [Post]
+    postByID(id: String!): Post
+}
+
+type Deleted {
+    ok: Boolean
+}
+
+type Mutation {
+    createPost(text: String!): Post!
+    updatePost(text: String!, id: String!): Post!
+    upvote(id: String!): Post!
+    removePost(id: String!): Boolean!
+}
