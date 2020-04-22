@@ -17,8 +17,36 @@ export class PostService {
     async getAll(page: number = 0) {
         const page_size = Number(process.env.PAGE_SIZE)
         const skip =  page * page_size
-        const posts = await this.postModel
-            .aggregate()
+        let posts = await this.postModel
+            .aggregate([
+                {
+                    "$lookup": {
+                        "from": "comments",
+                        "let": { "comments": "$_id" },
+                        "pipeline": [
+                          { "$match": { }},
+                          { "$lookup": {
+                            "from": "users",
+                            "let": { "upvotes": "$_id" },
+                            "pipeline": [
+                              { "$match": { }}
+                            ],
+                            "as": "upvotes"
+                          }},
+                          { "$lookup": {
+                            "from": "users",
+                            "let": { "creator": "$_id" },
+                            "pipeline": [
+                              { "$match": { }}
+                            ],
+                            "as": "creator"
+                          }},
+                          { "$unwind": "$creator" }
+                        ],
+                        "as": "comments"
+                    }
+                }
+            ])
             .lookup({
                 from: 'users',
                 localField: 'creator',
@@ -31,15 +59,10 @@ export class PostService {
                 foreignField:'_id',
                 as: 'upvotes'
             })
-            .lookup({
-                from: 'comments',
-                localField: 'comments',
-                foreignField:'_id',
-                as: 'comments'
-            })
             .unwind('$creator')
             .skip(skip)
             .limit(page_size)
+            console.log(posts[0].comments[0])
         return posts
     }
 
