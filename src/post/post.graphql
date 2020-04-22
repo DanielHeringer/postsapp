@@ -4,6 +4,7 @@ type Post {
     created: String
     upvotes: [User]
     downvotes: [User]
+    comments: [Comment]
     creator: User
 }
 
@@ -12,13 +13,9 @@ type Query {
     postByID(id: String!): Post
 }
 
-type Deleted {
-    ok: Boolean
-}
-
 type Mutation {
     createPost(text: String!): Post!
     updatePost(text: String!, id: String!): Post!
-    upvote(id: String!): Post!
+    upvotePost(id: String!): Post!
     removePost(id: String!): Boolean!
 }

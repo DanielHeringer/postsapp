@@ -1,0 +1,20 @@
+type Comment {
+    _id: ID
+    text: String
+    created: String
+    postRef: Post
+    upvotes: [User]
+    creator: User
+}
+
+type Query {
+    commentsByPost(page: Int, postID: String): [Comment!]
+    commentByID(id: String!): Comment!
+}
+
+type Mutation {
+    createComment(text: String!, post: String!): Comment!
+    updateComment(text: String!, comment: String!): Comment
+    upvoteComment(id: String!): Comment!
+    removeComment(id: String!): Boolean!
+}

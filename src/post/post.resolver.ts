@@ -49,7 +49,7 @@ export class PostResolver {
 
     @Mutation()
     @UseGuards(new AuthGuard)
-    upvote(
+    upvotePost(
         @Args('id') id: string,
         @Context('user') user: any
     ) {

@@ -1,11 +1,10 @@
 import { Document } from 'mongoose';
 
-export interface Post extends Document {
+export interface Comment extends Document {
   _id: string
   text: string
   created: string
   upvotes: [string]
-  downvotes: [string]
-  comments: [string]
   creator: string
+  postRef: string
 }

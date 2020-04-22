@@ -9,6 +9,7 @@ import { UserModule } from 'src/user/user.module';
 @Module({
   imports: [DatabaseModule, UserModule],
   providers: [PostService, PostResolver,
-    ...postProviders]
+    ...postProviders],
+  exports: [PostService]
 })
 export class PostModule {}

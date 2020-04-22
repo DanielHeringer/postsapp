@@ -25,6 +25,18 @@ export class PostService {
                 foreignField:'_id',
                 as: 'creator'
             })
+            .lookup({
+                from: 'users',
+                localField: 'upvotes',
+                foreignField:'_id',
+                as: 'upvotes'
+            })
+            .lookup({
+                from: 'comments',
+                localField: 'comments',
+                foreignField:'_id',
+                as: 'comments'
+            })
             .unwind('$creator')
             .skip(skip)
             .limit(page_size)
@@ -85,6 +97,27 @@ export class PostService {
         if(update){
             return this.getByID(id)
         }
+    }
+
+    async pushComment(idComment: string, idPost: string) {
+        let find = await this.postModel.findOne({_id: idPost})
+        if(!find) {
+            throw new HttpException('Post not found', HttpStatus.NOT_FOUND)
+        }
+        find.comments.push(idComment)
+        return await find.save()
+    }
+    
+    async removeComment(idComment: string, idPost: string) {
+        let find = await this.postModel.findOne({_id: idPost})
+        if(!find) {
+            throw new HttpException('Post not found', HttpStatus.NOT_FOUND)
+        }
+        const index: number = find.comments.indexOf(idComment)
+        if (index !== -1) {
+            find.comments.splice(index, 1);
+        }     
+        return await find.save()
     }
 
     async upvote(id: string, userID: string) {
