@@ -104,12 +104,12 @@ export class PostService {
 
     async delete(id: string, userID: string) {
         const find = await this.postModel.findOne({_id: id})
-        const user = await this.userService.getByID(userID)
         if(!find) {
             throw new HttpException('Post not found', HttpStatus.NOT_FOUND)
         }
         this.verifyOwner(userID, find.creator)
         
+        await this.userService.removePost(id, find.creator)
         const remove = await this.postModel.deleteOne({ _id: id });
         if(remove){
             return true

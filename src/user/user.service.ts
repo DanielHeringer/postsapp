@@ -86,7 +86,7 @@ export class UserService {
         if(!find) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND)
         }
-        const index: number = find.posts.indexOf(idUser)
+        const index: number = find.posts.indexOf(idPost)
         if (index !== -1) {
             find.posts.splice(index, 1);
         }     

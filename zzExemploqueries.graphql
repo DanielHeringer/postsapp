@@ -1,50 +1,144 @@
-### Queries usuarios
+
+#usuario
+mutation {
+  login(username:"danielheringer1", password:"123") {
+    _id
+    username
+    token
+  }
+}
+
+mutation{
+  createUser(username:"danielheringer1", password:"123") {
+    _id
+    username
+    token
+  }
+}
+
+mutation{
+  updateUser(username:"danielheringer", password:"1234", id:"5e99971e85155927a4686727") {
+    _id
+    username
+    token
+  }
+}
+
+query {
+  userByID(id: "5e99ec88d8d3003b0c8f3046"){
+    _id
+    username
+  }
+}
+
+query {
+  users(page:0){
+    _id
+    username
+    posts{
+      _id
+      text
+      upvotes{
+        _id
+        username
+      }
+      downvotes{
+        _id	
+        username
+      }
+      creator{
+        _id
+        username
+      }
+    }
+  }
+}
+
+query {
+  userByUsername(username: "danielheringer"){ 
+    _id
+    username
+    posts {
+      _id
+      text
+      upvotes{
+        _id
+        username
+      }
+    }
+  }
+}
+
+#posts
+query {
+  posts{ 
+    _id
+    text
+    created
+    upvotes {
+      _id
+      username
+    }
+    creator{
+      _id
+      username
+    }
+  }
+}
+
+ mutation{
+  createPost(text:"post com jwt") {
+  	_id
+    text
+    creator{
+      _id
+      username
+    }
+  }
+}  
+
+mutation{
+  updatePost(text:"texto primeiro post atualizado", id:"5e99ecf9d8d3003b0c8f3047") {
+  	_id
+    text
+    creator{
+      _id
+      username
+    }
+  }
+}
+
+mutation{
+  removePost(id:"5e9dd28f92a0e42f88c54ef6")
+}
+
+query {
+  postByID(id: "5e99ecf9d8d3003b0c8f3047") { 
+    _id
+    text
+    upvotes {
+      _id
+      username
+    }
+    creator{
+      _id
+      username
+    }
+  }
+}
 
 mutation {
-  login(username:"daniel", password:"123") {
-    id
-    username
-    token
+  upvote(id: "5e9dd28f92a0e42f88c54ef6") { 
+    _id
+    text
+    upvotes {
+      _id
+      username
+    }
+    creator{
+      _id
+      username
+    }
+    created
   }
 }
-
-mutation{
-  createUser(username:"daniel3", password:"312") {
-    id
-    username
-    token
-  }
-}
-
-mutation{
-  updateUser(username:"daniel5", password:"312", id:"5e99971e85155927a4686727") {
-    id
-    username
-    token
-  }
-}
-
-query {
-  userByID(id: "5e99971e85155927a4686727"){
-    id
-    username
-  }
-}
-
-query {
-  users{
-    id
-    username
-  }
-}
-
-query {
-  userByUsername(username: "daniel2"){ 
-    id
-    username
-  }
-}
-
-
-### Queries Posts
-
