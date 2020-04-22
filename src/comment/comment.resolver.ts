@@ -15,8 +15,8 @@ export class CommentResolver {
     }
     
     @Query()
-    commentByID(@Args('id') id: string){
-        return this.commentService.getByID(id)
+    commentByID(@Args('postID') postID: string){
+        return this.commentService.getByID(postID)
     }
 
     @Mutation()

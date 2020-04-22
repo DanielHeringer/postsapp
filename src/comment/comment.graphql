@@ -9,7 +9,7 @@ type Comment {
 
 type Query {
     commentsByPost(page: Int, postID: String): [Comment!]
-    commentByID(id: String!): Comment!
+    commentByID(postID: String!): Comment!
 }
 
 type Mutation {

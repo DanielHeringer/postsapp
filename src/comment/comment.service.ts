@@ -16,9 +16,10 @@ export class CommentService {
         private postService: PostService
     ) {}
 
-    async getByID(id: string) {
-        let idToSearch = mongoose.Types.ObjectId(id)
-        const post = await this.commentModel
+    async getByID(postID: string) {
+        let idToSearch = mongoose.Types.ObjectId(postID)
+        
+        const comment = await this.commentModel
             .aggregate()
             .match({_id: idToSearch})
             .lookup({
@@ -41,8 +42,11 @@ export class CommentService {
             })
             .unwind('$postRef')
             .unwind('$creator')
+        if( comment.length === 0){
+            throw new HttpException('Comment not found', HttpStatus.NOT_FOUND)
+        }
             
-        return post[0]
+        return comment[0]
     }
 
     async getByPost(postID: string) {
@@ -70,7 +74,6 @@ export class CommentService {
             })
             .unwind('$creator')
             .unwind('$postRef')
-            
         return comment
     }
 
@@ -121,7 +124,7 @@ export class CommentService {
             throw new HttpException('Already upvoted', HttpStatus.OK)
         }
         find.upvotes.push(userID)
-        const update = await find.save();
+        const update = await find.save()
         if(update){
             return this.getByID(id)
         }
@@ -144,7 +147,7 @@ export class CommentService {
         }
     }
 
-    verifyOwner(userID, creatorID){
+    verifyOwner(userID: string, creatorID: string){
         if(userID != creatorID){
             throw new HttpException('User not authorized', HttpStatus.UNAUTHORIZED)
         }

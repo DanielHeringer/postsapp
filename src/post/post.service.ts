@@ -63,6 +63,9 @@ export class PostService {
             .unwind('$creator')
             console.log(post)
             
+        if( post.length === 0){
+            throw new HttpException('Comment not found', HttpStatus.NOT_FOUND)
+        }
         return post[0]
     }
 

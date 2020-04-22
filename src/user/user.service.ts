@@ -24,15 +24,8 @@ export class UserService {
                 foreignField:'_id',
                 as: 'posts'
             })
-            // .lookup({
-            //     from: 'users',
-            //     localField: 'posts.creator',
-            //     foreignField:'_id',
-            //     as: 'posts.creator'
-            // })
             .skip(skip)
             .limit(page_size) 
-        console.log(users[0].posts)
         return users
     }
 
