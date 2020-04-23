@@ -17,7 +17,7 @@ export class PostService {
     async getAll(page: number = 0) {
         const page_size = Number(process.env.PAGE_SIZE)
         const skip =  page * page_size
-        let posts = await this.postModel
+        const posts = await this.postModel
             .aggregate([
                 {
                     "$lookup": {
@@ -62,7 +62,6 @@ export class PostService {
             .unwind('$creator')
             .skip(skip)
             .limit(page_size)
-            console.log(posts[0].comments[0])
         return posts
     }
 
