@@ -17,49 +17,63 @@ export class PostService {
     async getAll(page: number = 0) {
         const page_size = Number(process.env.PAGE_SIZE)
         const skip =  page * page_size
-        const posts = await this.postModel
+        const posts: any = await this.postModel
             .aggregate([
-                {
-                    "$lookup": {
-                        "from": "comments",
-                        "let": { "comments": "$_id" },
-                        "pipeline": [
-                          { "$match": { }},
-                          { "$lookup": {
-                            "from": "users",
-                            "let": { "upvotes": "$_id" },
-                            "pipeline": [
-                              { "$match": { }}
-                            ],
-                            "as": "upvotes"
-                          }},
-                          { "$lookup": {
-                            "from": "users",
-                            "let": { "creator": "$_id" },
-                            "pipeline": [
-                              { "$match": { }}
-                            ],
-                            "as": "creator"
-                          }},
-                          { "$unwind": "$creator" }
-                        ],
-                        "as": "comments"
+                {$lookup:{
+                    from: "users",
+                    localField: "creator",
+                    foreignField: "_id",
+                    as: "creator"
+                }},
+                {$unwind: "$creator" },
+                {$lookup: {
+                    from: "users",
+                    localField: "upvotes",
+                    foreignField: "_id",
+                    as: "upvotes"
+                }},
+                {$unwind: { path: "$upvotes", preserveNullAndEmptyArrays: true } },
+                {$lookup: {
+                    from: "comments",
+                    localField: "comments",
+                    foreignField: "_id",
+                    as: "comments"
+                }},
+                {$unwind: { path: "$comments", preserveNullAndEmptyArrays: true } },
+                {$lookup: {
+                    from: "users",
+                    localField: "comments.upvotes",
+                    foreignField: "_id",
+                    as: "commentsUpvotes"
+                }},
+                {$lookup: {
+                    from: "users",
+                    localField: "comments.creator",
+                    foreignField: "_id",
+                    as: "commentsCreator"
+                }},
+                {$unwind: { path: "$commentsCreator", preserveNullAndEmptyArrays: true } },
+                {$group: {
+                    _id: "$_id",
+                    text: {$first: "$text"},
+                    created: {$first: "$created"},
+                    creator: {$first: "$creator"},
+                    upvotes: {$push: "$upvotes"},
+                    comments: {$push: {
+                                _id: "$comments._id",
+                                text: "$comments.text",
+                                postRef: "$comments.postRef",  
+                                created: "$comments.created",
+                                creator: { 
+                                    _id: "$commentsCreator._id",
+                                    username: "$commentsCreator.username" 
+                                },
+                                upvotes: "$commentsUpvotes",
+                              }}
                     }
-                }
+                },
+
             ])
-            .lookup({
-                from: 'users',
-                localField: 'creator',
-                foreignField:'_id',
-                as: 'creator'
-            })
-            .lookup({
-                from: 'users',
-                localField: 'upvotes',
-                foreignField:'_id',
-                as: 'upvotes'
-            })
-            .unwind('$creator')
             .skip(skip)
             .limit(page_size)
         return posts
