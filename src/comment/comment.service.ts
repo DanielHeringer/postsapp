@@ -55,12 +55,6 @@ export class CommentService {
             .aggregate()
             .match({postRef: idToSearch})
             .lookup({
-                from: 'posts',
-                localField: 'postRef',
-                foreignField:'_id',
-                as: 'postRef'
-            })
-            .lookup({
                 from: 'users',
                 localField: 'creator',
                 foreignField:'_id',
@@ -73,7 +67,7 @@ export class CommentService {
                 as: 'upvotes'
             })
             .unwind('$creator')
-            .unwind('$postRef')
+            .sort({created: -1})
         return comment
     }
 
@@ -83,13 +77,12 @@ export class CommentService {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND)
         }
         const postRef = await this.postService.getByID(postID)
-        console.log(postRef)
         if(!postRef){
             throw new HttpException('Post not found', HttpStatus.NOT_FOUND)
         }
         comment.creator = creator._id
         comment.postRef = postRef._id
-        comment.created = new Date().toString()
+        comment.created = new Date().getTime().toString()
         let createdComment = new this.commentModel(comment)
         if (await createdComment.save()) {
             await this.postService.pushComment(createdComment._id, postRef._id)
@@ -106,7 +99,6 @@ export class CommentService {
             throw new HttpException('User not authorized', HttpStatus.UNAUTHORIZED)
         }
         const update = await this.commentModel.updateOne({_id: commentID}, {text: text})
-        console.log(update)
         if(update){
             return this.getByID(commentID)
         }

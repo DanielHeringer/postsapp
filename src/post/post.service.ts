@@ -1,7 +1,8 @@
-import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common';
-import { Model, Mongoose } from 'mongoose';
+import { Injectable, Inject, HttpException, HttpStatus, forwardRef } from '@nestjs/common';
+import { Model } from 'mongoose';
 import * as mongoose from 'mongoose';
 
+import { CommentService } from './../comment/comment.service';
 import { Post } from './post.interface';
 import { UserService } from 'src/user/user.service';
 
@@ -12,6 +13,8 @@ export class PostService {
         @Inject('POST_MODEL')
         private postModel: Model<Post>,
         private userService: UserService,
+        @Inject(forwardRef(() => CommentService))
+        private readonly commentService: CommentService,
     ) {}
 
     async getAll(page: number = 0) {
@@ -33,49 +36,22 @@ export class PostService {
                     as: "upvotes"
                 }},
                 {$unwind: { path: "$upvotes", preserveNullAndEmptyArrays: true } },
-                {$lookup: {
-                    from: "comments",
-                    localField: "comments",
-                    foreignField: "_id",
-                    as: "comments"
-                }},
-                {$unwind: { path: "$comments", preserveNullAndEmptyArrays: true } },
-                {$lookup: {
-                    from: "users",
-                    localField: "comments.upvotes",
-                    foreignField: "_id",
-                    as: "commentsUpvotes"
-                }},
-                {$lookup: {
-                    from: "users",
-                    localField: "comments.creator",
-                    foreignField: "_id",
-                    as: "commentsCreator"
-                }},
-                {$unwind: { path: "$commentsCreator", preserveNullAndEmptyArrays: true } },
                 {$group: {
                     _id: "$_id",
                     text: {$first: "$text"},
                     created: {$first: "$created"},
-                    creator: {$first: "$creator"},
-                    upvotes: {$push: "$upvotes"},
-                    comments: {$push: {
-                                _id: "$comments._id",
-                                text: "$comments.text",
-                                postRef: "$comments.postRef",  
-                                created: "$comments.created",
-                                creator: { 
-                                    _id: "$commentsCreator._id",
-                                    username: "$commentsCreator.username" 
-                                },
-                                upvotes: "$commentsUpvotes",
-                              }}
-                    }
-                },
-
+                    creator: {$first: {_id:"$creator._id", username: "$creator.username" } },
+                    upvotes: {$addToSet: "$upvotes"},
+                    comments: {$addToSet: "$comments"},
+                }},
+                {$sort: {"created": -1}},
             ])
             .skip(skip)
             .limit(page_size)
+            for(let index in posts){
+                posts[index].comments = await this.commentService.getByPost(posts[index]._id)
+            }
+
         return posts
     }
 
@@ -97,7 +73,6 @@ export class PostService {
                 as: 'upvotes'
             })
             .unwind('$creator')
-            console.log(post)
             
         if( post.length === 0){
             throw new HttpException('Comment not found', HttpStatus.NOT_FOUND)
@@ -116,7 +91,7 @@ export class PostService {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND)
         }
         post.creator = creator._id
-        post.created = new Date().toString()
+        post.created = new Date().getTime().toString()
         let createdPost = new this.postModel(post)
         if (await createdPost.save()) {
             await this.userService.pushPost(createdPost._id, creator._id)
@@ -165,9 +140,14 @@ export class PostService {
             throw new HttpException('Post not found', HttpStatus.NOT_FOUND)
         }
         if(find.upvotes.find(id => id == userID)){
-            throw new HttpException('Already upvoted', HttpStatus.OK)
+            const index: number = find.upvotes.indexOf(userID)
+            if (index !== -1) {
+                find.upvotes.splice(index, 1);
+            }     
         }
-        find.upvotes.push(userID)
+        else {
+            find.upvotes.push(userID)
+        }
         const update = await find.save();
         if(update){
             return this.getByID(id)

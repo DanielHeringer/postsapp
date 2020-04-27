@@ -38,6 +38,7 @@
     "dotenv": "^8.2.0",
     "graphql": "^15.0.0",
     "graphql-tools": "^5.0.0",
+    "graphql-types-unix-timestamp": "^0.3.5",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.9.9",
     "pg": "^8.0.2",

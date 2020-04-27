@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 
 import { DatabaseModule } from 'src/database/database.module';
 import { CommentService } from './comment.service';
@@ -8,8 +8,9 @@ import { UserModule } from 'src/user/user.module';
 import { PostModule } from 'src/post/post.module';
 
 @Module({
-    imports: [DatabaseModule, UserModule, PostModule],
+    imports: [DatabaseModule, UserModule, forwardRef(() =>PostModule)],
     providers: [CommentService, CommentResolver,
-      ...commentProviders]
+      ...commentProviders],
+    exports: [CommentService]
 })
 export class CommentModule {}

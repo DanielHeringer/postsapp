@@ -28,6 +28,7 @@ export class PostResolver {
         const post: Partial<Post> = {text}
         return this.postService.create(post, user._id)
     }
+
     @Mutation()
     @UseGuards(new AuthGuard)
     updatePost(
@@ -38,6 +39,7 @@ export class PostResolver {
         const post: Partial<Post> = {text}
         return this.postService.update(text, id, user._id)
     }
+
     @Mutation()
     @UseGuards(new AuthGuard)
     removePost(
