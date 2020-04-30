@@ -1,7 +1,7 @@
-import { Resolver, Args, Query, Mutation, Context, GqlExecutionContext, Info, Root  } from '@nestjs/graphql';
+import { Resolver, Args, Query, Mutation, Context } from '@nestjs/graphql';
 import { PostService } from './post.service';
 import { Post } from './post.interface';
-import { UseGuards, ExecutionContext } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from 'src/shared/auth.guard';
 
 @Resolver('Post')
@@ -10,8 +10,15 @@ export class PostResolver {
     constructor(private postService: PostService) {}
 
     @Query()
-    posts(@Args('page') page: number = 0){
+    posts(@Args('page') page = 0){
         return this.postService.getAll(page)
+    }
+    
+    @Query()
+    postsByUser(
+        @Args('username') username: string,
+        @Args('page') page = 0){
+        return this.postService.getByUser(username, page)
     }
     
     @Query()
@@ -36,7 +43,6 @@ export class PostResolver {
         @Args('id') id: string,
         @Context('user') user: any
     ) {
-        const post: Partial<Post> = {text}
         return this.postService.update(text, id, user._id)
     }
 

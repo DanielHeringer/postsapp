@@ -13,9 +13,9 @@ export class UserService {
         private userModel: Model<User>,
     ) {}
 
-    async getAll(page: number = 0) {
-        const page_size = Number(process.env.PAGE_SIZE)
-        const skip =  page * page_size
+    async getAll(page = 0) {
+        const pageSize = Number(process.env.PAGE_SIZE)
+        const skip =  page * pageSize
         const users = await this.userModel
             .aggregate()
             .lookup({
@@ -25,7 +25,7 @@ export class UserService {
                 as: 'posts'
             })
             .skip(skip)
-            .limit(page_size) 
+            .limit(pageSize) 
         return users
     }
 
@@ -34,7 +34,8 @@ export class UserService {
     }
     
     async getByUsername(username: string) {
-        return await this.userModel.findOne({username: username}).exec()        
+        const user = await this.userModel.findOne({username: username}) 
+        return user
     }
 
     async create(user: Partial<User>){
@@ -52,7 +53,7 @@ export class UserService {
     }
 
     async update(user: Partial<User>, id: string) {
-        let find = await this.userModel.findOne({_id: id}).exec()
+        const find = await this.userModel.findOne({_id: id}).exec()
         if(!find) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND)
         }
@@ -66,7 +67,7 @@ export class UserService {
     }
 
     async pushPost(idPost: string, idUser: string) {
-        let find = await this.userModel.findOne({_id: idUser})
+        const find = await this.userModel.findOne({_id: idUser})
         if(!find) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND)
         }
@@ -75,7 +76,7 @@ export class UserService {
     }
     
     async removePost(idPost: string, idUser: string) {
-        let find = await this.userModel.findOne({_id: idUser})
+        const find = await this.userModel.findOne({_id: idUser})
         if(!find) {
             throw new HttpException('User not found', HttpStatus.NOT_FOUND)
         }
@@ -90,11 +91,11 @@ export class UserService {
         const { username, password } = user
         const userFind = await this.userModel.findOne({username: username})
         if( !userFind ) {
-            throw new HttpException('Invalid username', HttpStatus.BAD_REQUEST)
+            throw new HttpException('User not found', HttpStatus.NOT_FOUND)
         }
         const compare = await this.comparePassword(password, userFind)
         if(!compare) {
-            throw new HttpException('Invalid password', HttpStatus.BAD_REQUEST)
+            throw new HttpException('Wrong password', HttpStatus.BAD_REQUEST)
         }
         return this.toResponseObject(userFind)
     }

@@ -10,6 +10,7 @@ type Post {
 
 type Query {
     posts(page: Int): [Post]
+    postsByUser(username: String, page: Int): [Post]
     postByID(id: String!): Post
 }
 

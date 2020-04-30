@@ -17,9 +17,9 @@ export class PostService {
         private readonly commentService: CommentService,
     ) {}
 
-    async getAll(page: number = 0) {
-        const page_size = Number(process.env.PAGE_SIZE)
-        const skip =  page * page_size
+    async getAll(page = 0) {
+        const pageSize = Number(process.env.PAGE_SIZE)
+        const skip =  page * pageSize
         const posts: any = await this.postModel
             .aggregate([
                 {$lookup:{
@@ -47,33 +47,88 @@ export class PostService {
                 {$sort: {"created": -1}},
             ])
             .skip(skip)
-            .limit(page_size)
-            for(let index in posts){
+            .limit(pageSize)
+            for(const index in posts){
                 posts[index].comments = await this.commentService.getByPost(posts[index]._id)
             }
+
 
         return posts
     }
 
+    async getByUser(username: string, page = 0) {
+        const findUser: any = await this.userService.getByUsername(username)
+        if(!findUser){
+            throw new HttpException('User not found', HttpStatus.NOT_FOUND)
+        }
+        const pageSize = Number(process.env.PAGE_SIZE)
+        const skip =  page * pageSize
+        const posts: any = await this.postModel
+            .aggregate([
+                {$match: {creator: findUser._id}},
+                {$lookup:{
+                    from: "users",
+                    localField: "creator",
+                    foreignField: "_id",
+                    as: "creator"
+                }},
+                {$unwind: "$creator" },
+                {$lookup: {
+                    from: "users",
+                    localField: "upvotes",
+                    foreignField: "_id",
+                    as: "upvotes"
+                }},
+                {$unwind: { path: "$upvotes", preserveNullAndEmptyArrays: true } },
+                {$group: {
+                    _id: "$_id",
+                    text: {$first: "$text"},
+                    created: {$first: "$created"},
+                    creator: {$first: {_id:"$creator._id", username: "$creator.username" } },
+                    upvotes: {$addToSet: "$upvotes"},
+                    comments: {$addToSet: "$comments"},
+                }},
+                {$sort: {"created": -1}},
+            ])
+            .skip(skip)
+            .limit(pageSize)
+            for(const index in posts){
+                posts[index].comments = await this.commentService.getByPost(posts[index]._id)
+            }
+        return posts
+    }
+
+
     async getByID(id: string) {
-        let idToSearch = mongoose.Types.ObjectId(id)
-        const post = await this.postModel
-            .aggregate()
-            .match({_id: idToSearch})
-            .lookup({
-                from: 'users',
-                localField: 'creator',
-                foreignField:'_id',
-                as: 'creator'
-            })
-            .lookup({
-                from: 'users',
-                localField: 'upvotes',
-                foreignField:'_id',
-                as: 'upvotes'
-            })
-            .unwind('$creator')
-            
+        const idToSearch = mongoose.Types.ObjectId(id)
+        const post: any = await this.postModel
+        .aggregate([
+            {$match: {_id: idToSearch}},
+            {$lookup:{
+                from: "users",
+                localField: "creator",
+                foreignField: "_id",
+                as: "creator"
+            }},
+            {$unwind: "$creator" },
+            {$lookup: {
+                from: "users",
+                localField: "upvotes",
+                foreignField: "_id",
+                as: "upvotes"
+            }},
+            {$unwind: { path: "$upvotes", preserveNullAndEmptyArrays: true } },
+            {$group: {
+                _id: "$_id",
+                text: {$first: "$text"},
+                created: {$first: "$created"},
+                creator: {$first: {_id:"$creator._id", username: "$creator.username" } },
+                upvotes: {$addToSet: "$upvotes"},
+                comments: {$addToSet: "$comments"},
+            }}
+        ])
+
+        post[0].comments = await this.commentService.getByPost(post[0]._id)
         if( post.length === 0){
             throw new HttpException('Comment not found', HttpStatus.NOT_FOUND)
         }
@@ -92,7 +147,7 @@ export class PostService {
         }
         post.creator = creator._id
         post.created = new Date().getTime().toString()
-        let createdPost = new this.postModel(post)
+        const createdPost = new this.postModel(post)
         if (await createdPost.save()) {
             await this.userService.pushPost(createdPost._id, creator._id)
             return await this.getByID(createdPost._id)
@@ -100,7 +155,7 @@ export class PostService {
     }
 
     async update(text: string, id: string, userID: string) {
-        let find = await this.postModel.findOne({_id: id})
+        const find = await this.postModel.findOne({_id: id})
         if(!find) {
             throw new HttpException('Post not found', HttpStatus.NOT_FOUND)
         }
@@ -114,7 +169,7 @@ export class PostService {
     }
 
     async pushComment(idComment: string, idPost: string) {
-        let find = await this.postModel.findOne({_id: idPost})
+        const find = await this.postModel.findOne({_id: idPost})
         if(!find) {
             throw new HttpException('Post not found', HttpStatus.NOT_FOUND)
         }
@@ -123,7 +178,7 @@ export class PostService {
     }
     
     async removeComment(idComment: string, idPost: string) {
-        let find = await this.postModel.findOne({_id: idPost})
+        const find = await this.postModel.findOne({_id: idPost})
         if(!find) {
             throw new HttpException('Post not found', HttpStatus.NOT_FOUND)
         }
@@ -135,7 +190,7 @@ export class PostService {
     }
 
     async upvote(id: string, userID: string) {
-        let find = await this.postModel.findOne({_id: id})
+        const find = await this.postModel.findOne({_id: id})
         if(!find) {
             throw new HttpException('Post not found', HttpStatus.NOT_FOUND)
         }

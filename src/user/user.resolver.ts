@@ -8,7 +8,7 @@ export class UserResolver {
     constructor(private userService: UserService) {}
 
     @Query()
-    users(@Args('page') page: number = 0){
+    users(@Args('page') page = 0){
         return this.userService.getAll(page)
     }
     

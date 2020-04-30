@@ -1,4 +1,4 @@
-import { Injectable, Inject, HttpException, HttpStatus } from '@nestjs/common';
+import { Injectable, Inject, HttpException, HttpStatus, forwardRef } from '@nestjs/common';
 import { Model } from 'mongoose';
 import * as mongoose from 'mongoose';
 
@@ -13,11 +13,12 @@ export class CommentService {
         @Inject('COMMENT_MODEL')
         private commentModel: Model<Comment>,
         private userService: UserService,
-        private postService: PostService
+        @Inject(forwardRef(() => PostService))
+        private readonly postService: PostService
     ) {}
 
     async getByID(postID: string) {
-        let idToSearch = mongoose.Types.ObjectId(postID)
+        const idToSearch = mongoose.Types.ObjectId(postID)
         
         const comment = await this.commentModel
             .aggregate()
@@ -50,7 +51,7 @@ export class CommentService {
     }
 
     async getByPost(postID: string) {
-        let idToSearch = mongoose.Types.ObjectId(postID)
+        const idToSearch = mongoose.Types.ObjectId(postID)
         const comment = await this.commentModel
             .aggregate()
             .match({postRef: idToSearch})
@@ -67,7 +68,7 @@ export class CommentService {
                 as: 'upvotes'
             })
             .unwind('$creator')
-            .sort({created: -1})
+            .sort({created: 1})
         return comment
     }
 
@@ -83,7 +84,7 @@ export class CommentService {
         comment.creator = creator._id
         comment.postRef = postRef._id
         comment.created = new Date().getTime().toString()
-        let createdComment = new this.commentModel(comment)
+        const createdComment = new this.commentModel(comment)
         if (await createdComment.save()) {
             await this.postService.pushComment(createdComment._id, postRef._id)
             return await this.getByID(createdComment._id)
@@ -91,7 +92,7 @@ export class CommentService {
     }
 
     async update(text: string, commentID: string, userID: string) {
-        let find = await this.commentModel.findOne({_id: commentID})
+        const find = await this.commentModel.findOne({_id: commentID})
         if(!find) {
             throw new HttpException('Comment not found', HttpStatus.NOT_FOUND)
         }
@@ -108,14 +109,19 @@ export class CommentService {
     }
 
     async upvote(id: string, userID: string) {
-        let find = await this.commentModel.findOne({_id: id})
+        const find = await this.commentModel.findOne({_id: id})
         if(!find) {
             throw new HttpException('Comment not found', HttpStatus.NOT_FOUND)
         }
         if(find.upvotes.find(id => id == userID)){
-            throw new HttpException('Already upvoted', HttpStatus.OK)
+            const index: number = find.upvotes.indexOf(userID)
+            if (index !== -1) {
+                find.upvotes.splice(index, 1);
+            }     
         }
-        find.upvotes.push(userID)
+        else{        
+            find.upvotes.push(userID)
+        }
         const update = await find.save()
         if(update){
             return this.getByID(id)
