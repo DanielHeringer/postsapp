@@ -9,6 +9,6 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   await app.listen(port);
   app.useGlobalPipes(new ValidationPipe());
-  Logger.log(`Listening http://localhost:${port}`, 'Bootstrap')
+  Logger.log(`Listening ${process.env.APP_URL}:${port}`, 'Bootstrap')
 }
 bootstrap();
