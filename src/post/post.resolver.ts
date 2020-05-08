@@ -17,7 +17,8 @@ export class PostResolver {
     @Query()
     postsByUser(
         @Args('username') username: string,
-        @Args('page') page = 0){
+        @Args('page') page = 0
+    ) {
         return this.postService.getByUser(username, page)
     }
     
